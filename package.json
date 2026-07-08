@@ -1,0 +1,92 @@
+{
+  "name": "vibe-browser-vscode",
+  "displayName": "Visual Browser",
+  "publisher": "NafisRayan",
+  "description": "Integrated web browser for VS Code with element inspection tools",
+  "version": "1.1.0",
+  "icon": "logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NafisRayan/vibe-browser"
+  },
+  "bugs": {
+    "url": "https://github.com/NafisRayan/vibe-browser/issues",
+    "email": "hossam.dagdag@gmail.com"
+  },
+  "homepage": "https://github.com/NafisRayan/vibe-browser",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vibe-browser.openBrowser",
+        "title": "Open Visual Browser",
+        "icon": "$(globe)"
+      }
+    ],
+    "configuration": {
+      "title": "Visual Browser",
+      "properties": {
+        "visualBrowser.enableDebugLogs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for Visual Browser proxy and injection"
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "vibe-browser.openBrowser"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "vibe-browser.openBrowser",
+          "group": "navigation"
+        }
+      ],
+      "chat/title": [
+        {
+          "command": "vibe-browser.openBrowser",
+          "group": "navigation"
+        }
+      ],
+      "chat/input/action": [
+        {
+          "command": "vibe-browser.openBrowser",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run build:webview",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build:webview": "cd webview-ui && npm install && npm run build",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.27",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@types/http-proxy": "^1.17.17",
+    "chii": "^1.15.5",
+    "http-proxy": "^1.18.1",
+    "img-clipboard": "^1.1.0",
+    "node-localstorage": "^3.0.5",
+    "tough-cookie": "^6.0.0"
+  }
+}

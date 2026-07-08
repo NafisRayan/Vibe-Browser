@@ -1,0 +1,13 @@
+.git
+.vscode
+src
+webview-ui
+tsconfig.json
+logo-prompts.json
+landingpage.html
+*.vsix
+package-lock.json
+node_modules/*/test/**
+node_modules/**/README.md
+node_modules/**/LICENSE
+node_modules/**/*.map

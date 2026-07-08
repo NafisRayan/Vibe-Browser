@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+webview-ui/build/
+webview-ui/node_modules/
+
+# Extension package
+*.vsix
+
+# IDE files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+logo-prompts.json
+landingpage.html

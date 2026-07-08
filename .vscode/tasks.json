@@ -1,0 +1,292 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "compile",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": "$tsc",
+			"label": "npm: compile",
+			"detail": "compile the extension"
+		},
+		{
+			"label": "Package Extension",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package Extension",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package Extension",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Package VSIX",
+			"type": "shell",
+			"command": "npx",
+			"args": [
+				"vsce",
+				"package"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "npm: build:webview",
+			"type": "shell",
+			"command": "cd \"c:\\Users\\NafisRayan\\Desktop\\vibe-browser\\webview-ui\" && npm run build",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "git add -A",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git status",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git status",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status",
+				"--porcelain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git add all",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"add",
+				"-A"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git commit",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"commit",
+				"-m",
+				"feat: Improve screenshot quality for element picker and snipper\n\n- Increased pixelRatio from 0.5 to 2 for high-quality screenshots\n- Fixed cropping coordinates to scale properly with pixelRatio\n- Added element screenshot support to picker (sends image + text to chat)\n- Added debug logging for troubleshooting screenshot capture\n- Fixed background color preservation in element screenshots\n- Updated html-to-image library for better screenshot quality"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git log",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"log",
+				"-1",
+				"--oneline"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git status",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"status"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "check commit",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"log",
+				"-1",
+				"--format=%H %s"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "git push",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"push"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "none"
+		},
+		{
+			"label": "npm: build:webview",
+			"type": "shell",
+			"command": "npm run build:webview",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "npm: build:webview",
+			"type": "shell",
+			"command": "npm run build:webview",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "npm: build:webview",
+			"type": "shell",
+			"command": "npm run build:webview",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
