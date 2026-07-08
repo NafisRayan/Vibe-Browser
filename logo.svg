@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bg)"/>
+
+  <!-- Browser -->
+  <rect x="28" y="36" width="72" height="56" rx="10" fill="white"/>
+  <rect x="28" y="36" width="72" height="12" rx="10" fill="#E5E7EB"/>
+
+  <!-- Browser dots -->
+  <circle cx="38" cy="42" r="2.2" fill="#EF4444"/>
+  <circle cx="46" cy="42" r="2.2" fill="#F59E0B"/>
+  <circle cx="54" cy="42" r="2.2" fill="#10B981"/>
+
+  <!-- Cursor -->
+  <path d="M50 56 L68 74 L61 75 L64 86 L57 89 L54 78 L47 83 Z"
+        fill="#2563EB"/>
+
+  <!-- Sparkle -->
+  <path d="M92 22
+           L95 30
+           L103 33
+           L95 36
+           L92 44
+           L89 36
+           L81 33
+           L89 30Z"
+        fill="white"/>
+</svg>
