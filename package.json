@@ -29,7 +29,10 @@
       {
         "command": "vibe-browser.openBrowser",
         "title": "Open Vibe Browser",
-        "icon": "$(globe)"
+        "icon": {
+          "light": "icons/globe.svg",
+          "dark": "icons/globe.svg"
+        }
       }
     ],
     "configuration": {
