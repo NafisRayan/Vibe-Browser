@@ -1,6 +1,6 @@
 {
   "name": "vibe-browser-vscode",
-  "displayName": "Visual Browser",
+  "displayName": "Vibe Browser",
   "publisher": "NafisRayan",
   "description": "Integrated web browser for VS Code with element inspection tools",
   "version": "1.1.0",
@@ -28,17 +28,17 @@
     "commands": [
       {
         "command": "vibe-browser.openBrowser",
-        "title": "Open Visual Browser",
+        "title": "Open Vibe Browser",
         "icon": "$(globe)"
       }
     ],
     "configuration": {
-      "title": "Visual Browser",
+      "title": "Vibe Browser",
       "properties": {
         "visualBrowser.enableDebugLogs": {
           "type": "boolean",
           "default": false,
-          "description": "Enable debug logging for Visual Browser proxy and injection"
+          "description": "Enable debug logging for Vibe Browser proxy and injection"
         }
       }
     },

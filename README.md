@@ -1,16 +1,16 @@
-# Visual Browser for VS Code
+# Vibe Browser for VS Code
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/NafisRayan/vibe-browser/main/logo.png" alt="Visual Browser Logo" width="128" height="128"/>
+  <img src="https://raw.githubusercontent.com/NafisRayan/vibe-browser/main/logo.png" alt="Vibe Browser Logo" width="128" height="128"/>
 </p>
 
 > Browse your localhost dev server right inside VS Code — with built-in element inspection, screenshots, and DevTools.
 
-Visual Browser embeds a real browser into your VS Code workspace so you can preview, inspect, and capture your local web app without leaving the editor.
+Vibe Browser embeds a real browser into your VS Code workspace so you can preview, inspect, and capture your local web app without leaving the editor.
 
 ## Overview
 
-Run a local dev server? Visual Browser lets you:
+Run a local dev server? Vibe Browser lets you:
 
 - Browse **localhost** inside VS Code (Vite, Next.js, React, Angular, Vue, SvelteKit, …)
 - Click any element to capture its HTML, styles, and DOM path — copied straight to your clipboard
@@ -19,7 +19,7 @@ Run a local dev server? Visual Browser lets you:
 - Open integrated DevTools (Elements, Console, Network)
 - Persist bookmarks and your last-visited URL across sessions
 
-> Visual Browser is a **localhost-only** tool. It loads `localhost` / `127.0.0.1` URLs only — everything is routed through a local proxy so cookies, storage, and the element picker all work like a real browser tab.
+> Vibe Browser is a **localhost-only** tool. It loads `localhost` / `127.0.0.1` URLs only — everything is routed through a local proxy so cookies, storage, and the element picker all work like a real browser tab.
 
 ## Features
 
@@ -54,17 +54,17 @@ Run a local dev server? Visual Browser lets you:
 ## Installation
 
 1. Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=NafisRayan.vibe-browser)
-2. Or search **"Visual Browser"** in the VS Code Extensions sidebar
+2. Or search **"Vibe Browser"** in the VS Code Extensions sidebar
 
 ## Usage
 
 ### Opening the Browser
 - Click the **Globe icon** (`🌐`) in the editor title bar or the status bar
-- Or press `F1` → **Open Visual Browser**
+- Or press `F1` → **Open Vibe Browser**
 
 ### Browsing
 1. Enter a localhost URL in the address bar (e.g. `localhost:3000`, `127.0.0.1:5173`, or just `3000`)
-2. Visual Browser proxies the page through a local origin, preserving full browser functionality
+2. Vibe Browser proxies the page through a local origin, preserving full browser functionality
 
 ### Picking Elements
 1. Click the **Inspect icon** in the toolbar
@@ -92,7 +92,7 @@ Run a local dev server? Visual Browser lets you:
 
 ## How It Works
 
-Visual Browser runs a lightweight HTTP proxy on a random local port that forwards requests to your dev server. The proxied page is loaded in a sandboxed iframe within a VS Code Webview panel. This architecture gives you:
+Vibe Browser runs a lightweight HTTP proxy on a random local port that forwards requests to your dev server. The proxied page is loaded in a sandboxed iframe within a VS Code Webview panel. This architecture gives you:
 
 - **Same-origin injection** — the element picker and screenshot tools are served from the proxy origin, so they work on every framework (including Next.js with mixed content protections)
 - **Real browser storage** — cookies, localStorage, sessionStorage, and IndexedDB are handled natively by the iframe

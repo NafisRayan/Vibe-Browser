@@ -30,7 +30,7 @@ export class BrowserPanel {
 
         const panel = vscode.window.createWebviewPanel(
             'visualBrowser',
-            'Visual Browser',
+            'Vibe Browser',
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -301,8 +301,8 @@ export class BrowserPanel {
             content = `
                 <div id="message-container">
                     <div class="welcome">
-                        <img src="${logoUri}" class="logo" alt="Visual Browser" />
-                        <h1>Visual Browser</h1>
+                        <img src="${logoUri}" class="logo" alt="Vibe Browser" />
+                        <h1>Vibe Browser</h1>
                         <p>Enter a <strong>localhost</strong> URL above to start (e.g. <code>localhost:3000</code>).</p>
                     </div>
                 </div>`;
@@ -314,7 +314,7 @@ export class BrowserPanel {
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="${this._csp()}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Browser</title>
+    <title>Vibe Browser</title>
     <style>
         html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
             background: var(--vscode-editor-background); color: var(--vscode-foreground);
@@ -339,7 +339,7 @@ export class BrowserPanel {
         this._renderShell(undefined, `
             <div class="welcome">
                 <h1>Localhost only</h1>
-                <p>Visual Browser is built for local development. It can load
+                <p>Vibe Browser is built for local development. It can load
                 <code>localhost</code> / <code>127.0.0.1</code> URLs only.</p>
                 <p style="opacity:.6">You entered: <code>${this._escapeHtml(url)}</code></p>
             </div>`);

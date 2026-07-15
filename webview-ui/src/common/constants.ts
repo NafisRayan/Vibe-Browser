@@ -1,5 +1,5 @@
 /**
- * Centralized constants for the Visual Browser extension
+ * Centralized constants for the Vibe Browser extension
  */
 
 /**

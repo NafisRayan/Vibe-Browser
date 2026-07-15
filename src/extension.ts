@@ -13,8 +13,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Create a Status Bar Item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'vibe-browser.openBrowser';
-    statusBarItem.text = '$(globe) Visual Browser';
-    statusBarItem.tooltip = 'Click to open Visual Browser';
+    statusBarItem.text = '$(globe) Vibe Browser';
+    statusBarItem.tooltip = 'Click to open Vibe Browser';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
