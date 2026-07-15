@@ -3,7 +3,7 @@
   "displayName": "Vibe Browser",
   "publisher": "NafisRayan",
   "description": "Integrated web browser for VS Code with element inspection tools",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "icon": "logo.png",
   "repository": {
     "type": "git",
