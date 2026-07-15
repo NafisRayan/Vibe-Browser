@@ -39,7 +39,7 @@ function debugLog(...args: any[]): void {
 }
 
 /**
- * Single local proxy in front of a localhost dev server.
+ * Single local proxy in front of a target URL (localhost or remote).
  *
  * Everything the webview iframe loads is served from THIS origin
  * (http://127.0.0.1:<port>). That gives the framed page a real HTTP origin, so:
@@ -56,6 +56,7 @@ export class ProxyServer {
     private _extensionUri: vscode.Uri;
     private _port: number = 0;
     private _targetOrigin: string = '';
+    private _currentTargetFullUrl: string = '';
     private _injectedScriptContent: string = '';
     private _chiiPort: number | undefined;
     private _chiiServer: http.Server | undefined;
@@ -99,12 +100,14 @@ export class ProxyServer {
     }
 
     /**
-     * Start (or re-target) the proxy in front of the given localhost port.
+     * Start (or re-target) the proxy in front of the given target URL.
      * Idempotent: if the server is already listening, only the target changes.
      * Returns the proxy's own port.
      */
-    public async start(targetUrl: string): Promise<number> {
-        this._targetOrigin = targetUrl;
+    public async start(fullTargetUrl: string): Promise<number> {
+        const parsed = new URL(fullTargetUrl);
+        this._targetOrigin = `${parsed.protocol}//${parsed.host}`;
+        this._currentTargetFullUrl = fullTargetUrl;
 
         if (this._server) {
             return this._port;
@@ -140,41 +143,20 @@ export class ProxyServer {
                 }
             };
 
-            // Prefer a deterministic port derived from the target so the iframe's
-            // origin stays stable across sessions -> localStorage / sessionStorage
-            // / cookies persist like a real browser. Fall back to a random port if
-            // the preferred one is taken.
-            const preferred = this._preferredPort(targetUrl);
+            // Let OS assign any available port to avoid permission/conflict issues
             server.once('error', (err: NodeJS.ErrnoException) => {
-                if (err.code === 'EADDRINUSE') {
-                    server.once('error', (err2) => {
-                        console.error('[ProxyServer] HTTP server failed to start:', err2);
-                        this._server = undefined;
-                        this._listenPromise = undefined;
-                        reject(err2);
-                    });
-                    server.listen(0, '127.0.0.1', onListening);
-                } else {
-                    console.error('[ProxyServer] HTTP server failed to start:', err);
-                    this._server = undefined;
-                    this._listenPromise = undefined;
-                    reject(err);
-                }
+                console.error('[ProxyServer] HTTP server failed to start:', err);
+                this._server = undefined;
+                this._listenPromise = undefined;
+                reject(err);
             });
-            server.listen(preferred, '127.0.0.1', onListening);
+            server.listen(0, '127.0.0.1', onListening);
         });
 
         return this._listenPromise;
     }
 
-    /** Deterministic proxy port for a given target, for a stable iframe origin. */
-    private _preferredPort(targetUrl: string): number {
-        let hash = 0;
-        for (let i = 0; i < targetUrl.length; i++) {
-            hash = ((hash << 5) - hash + targetUrl.charCodeAt(i)) | 0;
-        }
-        return 41000 + (Math.abs(hash) % 20000);
-    }
+
 
     private async _handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
         // Serve the injected picker script from our own origin (relative path in
@@ -277,16 +259,13 @@ export class ProxyServer {
             const targetUrl = new URL(target);
             const loc = new URL(location, target);
             const rest = loc.pathname + loc.search + loc.hash;
+            const newFullUrl = `${loc.protocol}//${loc.host}${rest}`;
 
-            // Same origin as target -> relative (stays in proxy)
-            if (loc.host === targetUrl.host) {
-                return rest;
-            }
+            // Update our tracked target URL as the page redirects
+            this._currentTargetFullUrl = newFullUrl;
+            this._targetOrigin = `${loc.protocol}//${loc.host}`;
 
-            // Cross-origin redirect (e.g. google.com -> www.google.com)
-            // Re-target the proxy to the new origin so subsequent requests follow.
-            const newTarget = `${loc.protocol}//${loc.host}`;
-            this._targetOrigin = newTarget;
+            // Always return relative to stay in proxy
             return rest;
         } catch {
             return location;
@@ -303,6 +282,7 @@ export class ProxyServer {
         // full layout (top:0) exactly like a real browser tab.
         const injection =
             `${chiiScript}` +
+            `<script>window.__VIBE_BROWSER_REAL_URL__ = ${JSON.stringify(this._currentTargetFullUrl)};</script>` +
             `<script src="${INJECTED_SCRIPT_PATH}"></script>`;
 
         if (/<head[^>]*>/i.test(html)) {
@@ -361,7 +341,7 @@ export class ProxyServer {
         }
 
         if (!this._chiiPort) {
-            return { error: 'DevTools server not initialized. Please load a localhost URL first.' };
+            return { error: 'DevTools server not initialized. Try reloading the page.' };
         }
 
         for (let attempt = 0; attempt < retries; attempt++) {

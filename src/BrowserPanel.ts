@@ -152,17 +152,13 @@ export class BrowserPanel {
     // ===== DevTools =====
 
     private _openDevTools() {
-        if (!this._isLocalhostUrl(this._currentUrl)) {
-            vscode.window.showWarningMessage('DevTools is only available for a loaded localhost page.');
-            return;
-        }
         this._proxyServer.getChiiUrl().then(result => {
             if (result.error) {
                 vscode.window.showErrorMessage(`DevTools Error: ${result.error}`);
                 return;
             }
             if (!result.url) {
-                vscode.window.showErrorMessage('DevTools is not ready. Load a localhost URL first.');
+                vscode.window.showErrorMessage('DevTools is not ready. Try reloading the page.');
                 return;
             }
             this._panel.webview.postMessage({ command: 'toggleInternalDevTools', chiiUrl: result.url });
@@ -237,16 +233,6 @@ export class BrowserPanel {
 
     // ===== URL loading =====
 
-    private _isLocalhostUrl(url: string): boolean {
-        if (!url) return false;
-        try {
-            const host = new URL(url.startsWith('http') ? url : `http://${url}`).hostname;
-            return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '[::1]';
-        } catch {
-            return false;
-        }
-    }
-
     private async _loadUrl(rawUrl: string) {
         let url = (rawUrl || '').trim();
         if (!url) return;
@@ -266,9 +252,8 @@ export class BrowserPanel {
     private async _loadViaProxy(url: string) {
         try {
             const parsed = new URL(url);
-            const targetOrigin = `${parsed.protocol}//${parsed.host}`;
 
-            const proxyPort = await this._proxyServer.start(targetOrigin);
+            const proxyPort = await this._proxyServer.start(url);
             const proxyUrl = `http://127.0.0.1:${proxyPort}${parsed.pathname}${parsed.search}`;
 
             const tunneled = await vscode.env.asExternalUri(vscode.Uri.parse(proxyUrl));
@@ -279,13 +264,12 @@ export class BrowserPanel {
             this._panel.webview.postMessage({ command: 'updateUrl', url });
             this._panel.webview.postMessage({ command: 'updatePageTitle', title: parsed.hostname });
 
-            if (this._isLocalhostUrl(url)) {
-                this._proxyServer.getChiiUrl().then(result => {
-                    if (result.url) {
-                        this._panel.webview.postMessage({ command: 'updateChiiUrl', chiiUrl: result.url });
-                    }
-                });
-            }
+            // Push DevTools target URL once Chii discovers the page
+            this._proxyServer.getChiiUrl().then(result => {
+                if (result.url) {
+                    this._panel.webview.postMessage({ command: 'updateChiiUrl', chiiUrl: result.url });
+                }
+            });
         } catch (error: any) {
             vscode.window.showErrorMessage(`Failed to load ${url}: ${error.message}`);
             this._renderShell(undefined, `<h2>Error loading ${this._escapeHtml(url)}</h2><p>${this._escapeHtml(error.message)}</p>`);
@@ -328,8 +312,8 @@ export class BrowserPanel {
 
     /**
      * Render the outer shell: React toolbar + one content area.
-     * - `frameSrc` set  -> proxied localhost page in an iframe
-     * - `bodyHtml` set  -> custom message (error / localhost-only)
+     * - `frameSrc` set  -> proxied page in an iframe
+     * - `bodyHtml` set  -> custom message (error)
      * - neither         -> landing page
      */
     private _renderShell(frameSrc?: string, bodyHtml?: string) {
