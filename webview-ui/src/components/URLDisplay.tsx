@@ -7,25 +7,26 @@ interface URLDisplayProps {
     onNavigate: () => void;
 }
 
+function parseURL(urlStr: string) {
+    try {
+        const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+        return {
+            protocol: parsed.protocol.replace(':', ''),
+            domain: parsed.hostname,
+            port: parsed.port ? `:${parsed.port}` : '',
+            path: parsed.pathname + parsed.search + parsed.hash
+        };
+    } catch {
+        return { protocol: '', domain: urlStr, port: '', path: '' };
+    }
+}
+
 export const URLDisplay: React.FC<URLDisplayProps> = ({ url, pageTitle, onUrlChange, onNavigate }) => {
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const parseURL = (urlStr: string) => {
-        try {
-            const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
-            return {
-                protocol: parsed.protocol.replace(':', ''),
-                domain: parsed.hostname,
-                port: parsed.port ? `:${parsed.port}` : '',
-                path: parsed.pathname + parsed.search + parsed.hash
-            };
-        } catch {
-            return { protocol: '', domain: urlStr, port: '', path: '' };
-        }
-    };
-
     const parts = parseURL(url);
+    const isSecure = parts.protocol === 'https';
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -57,10 +58,10 @@ export const URLDisplay: React.FC<URLDisplayProps> = ({ url, pageTitle, onUrlCha
                 transition: 'all 0.2s ease',
                 boxShadow: isFocused ? '0 0 0 2px var(--vscode-focusBorder)44' : 'none'
             }} onClick={() => inputRef.current?.focus()}>
-                <i className="codicon codicon-lock" style={{ 
-                    fontSize: '11px', 
-                    marginRight: '6px', 
-                    color: 'var(--vscode-charts-green)',
+                <i className={`codicon ${isSecure ? 'codicon-lock' : 'codicon-warning'}`} style={{
+                    fontSize: '11px',
+                    marginRight: '6px',
+                    color: isSecure ? 'var(--vscode-charts-green)' : 'var(--vscode-editorWarning-foreground)',
                     opacity: 0.8
                 }}></i>
                 

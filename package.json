@@ -3,7 +3,7 @@
   "displayName": "Vibe Browser",
   "publisher": "NafisRayan",
   "description": "Integrated web browser for VS Code with element inspection tools",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "icon": "logo.png",
   "repository": {
     "type": "git",
@@ -29,7 +29,10 @@
       {
         "command": "vibe-browser.openBrowser",
         "title": "Open Vibe Browser",
-        "icon": "$(globe)"
+        "icon": {
+          "light": "icons/globe.svg",
+          "dark": "icons/globe.svg"
+        }
       }
     ],
     "configuration": {
@@ -76,17 +79,15 @@
     "package": "vsce package"
   },
   "devDependencies": {
+    "@types/http-proxy": "^1.17.17",
     "@types/node": "^20.19.27",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.7.1",
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@types/http-proxy": "^1.17.17",
     "chii": "^1.15.5",
     "http-proxy": "^1.18.1",
-    "img-clipboard": "^1.1.0",
-    "node-localstorage": "^3.0.5",
-    "tough-cookie": "^6.0.0"
+    "img-clipboard": "^1.1.0"
   }
 }

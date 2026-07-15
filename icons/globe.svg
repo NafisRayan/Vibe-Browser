@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Outer border -->
+  <circle
+    cx="8"
+    cy="8"
+    r="7"
+    fill="none"
+    stroke="#22c55e"
+    stroke-width="0.625"/>
+
+  <!-- Vertical meridians -->
+  <ellipse
+    cx="8"
+    cy="8"
+    rx="4.5"
+    ry="7"
+    fill="none"
+    stroke="#22c55e"
+    stroke-width="0.625"/>
+
+  <ellipse
+    cx="8"
+    cy="8"
+    rx="2"
+    ry="7"
+    fill="none"
+    stroke="#22c55e"
+    stroke-width="0.625"/>
+
+  <!-- Horizontal parallels -->
+  <ellipse
+    cx="8"
+    cy="8"
+    rx="7"
+    ry="4.5"
+    fill="none"
+    stroke="#22c55e"
+    stroke-width="0.625"/>
+
+  <ellipse
+    cx="8"
+    cy="8"
+    rx="7"
+    ry="2"
+    fill="none"
+    stroke="#22c55e"
+    stroke-width="0.625"/>
+</svg>
