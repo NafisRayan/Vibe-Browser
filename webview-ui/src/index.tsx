@@ -37,6 +37,9 @@ function initializeApp() {
     } catch (err) {
         console.error('Failed to mount React:', err);
     }
+
+    // Notify extension host that the webview is ready
+    vscode.postMessage({ command: 'webviewReady' });
 }
 
 if (document.readyState === 'loading') {

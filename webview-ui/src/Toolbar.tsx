@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NavControls } from './components/NavControls';
 import { URLDisplay } from './components/URLDisplay';
 import { BrowserTools } from './components/BrowserTools';
-import { BookmarksBar, Bookmark } from './components/BookmarksBar';
+import { BookmarksBar } from './components/BookmarksBar';
+import { Bookmark } from './common/types';
 import { getVsCodeApi } from './vscode';
 
 const vscode = getVsCodeApi();
@@ -12,57 +13,59 @@ export const Toolbar: React.FC = () => {
     const [pageTitle, setPageTitle] = useState('');
     const [pickerActive, setPickerActive] = useState(false);
     const [snipperActive, setSnipperActive] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    // Navigation history
-    const [history, setHistory] = useState<string[]>([]);
-    const [historyIndex, setHistoryIndex] = useState(-1);
-    
     // Bookmarks
     const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
     const [isBookmarked, setIsBookmarked] = useState(false);
 
     useEffect(() => {
-        // Load bookmarks from VS Code state (sent from extension)
         const listener = (event: MessageEvent) => {
-             const message = event.data;
-             if (message.command === 'updateUrl') {
-                 setUrl(message.url);
-             } else if (message.command === 'updatePageTitle') {
-                 setPageTitle(message.title || '');
-             } else if (message.command === 'togglePicker') {
-                 setPickerActive(message.enabled);
-                 if (message.enabled) setSnipperActive(false);
-             } else if (message.command === 'toggleSnipper') {
-                 setSnipperActive(message.enabled);
-                 if (message.enabled) setPickerActive(false);
-             } else if (message.command === 'loadBookmarks') {
-                 setBookmarks(message.bookmarks || []);
-             }
+            const message = event.data;
+            if (message.command === 'updateUrl') {
+                setUrl(message.url);
+                setLoading(true);
+            } else if (message.command === 'updatePageTitle') {
+                setPageTitle(message.title || '');
+                setLoading(false);
+            } else if (message.command === 'togglePicker') {
+                setPickerActive(message.enabled);
+                if (message.enabled) setSnipperActive(false);
+            } else if (message.command === 'toggleSnipper') {
+                setSnipperActive(message.enabled);
+                if (message.enabled) setPickerActive(false);
+            } else if (message.command === 'loadBookmarks') {
+                setBookmarks(message.bookmarks || []);
+            }
         };
         window.addEventListener('message', listener);
-        
-        // Request initial bookmarks
+
         vscode.postMessage({ command: 'getBookmarks' });
-        
+
         return () => window.removeEventListener('message', listener);
     }, []);
 
     useEffect(() => {
-        // Check if current URL is bookmarked
         const bookmarked = bookmarks.some(b => b.url === url);
         setIsBookmarked(bookmarked);
     }, [url, bookmarks]);
 
-    const navigate = (newUrl: string, addToHistory = true) => {
-        if (addToHistory) {
-            // Add to history (remove everything after current index)
-            const newHistory = history.slice(0, historyIndex + 1);
-            newHistory.push(newUrl);
-            setHistory(newHistory);
-            setHistoryIndex(newHistory.length - 1);
-        }
-        
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                // Focus the URL input inside the iframe — dispatch via postMessage
+                window.postMessage({ command: 'focusUrlBar' }, '*');
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
+
+    const navigate = (newUrl: string) => {
         setUrl(newUrl);
+        setLoading(true);
         vscode.postMessage({ command: 'loadUrl', url: newUrl });
     };
 
@@ -71,8 +74,6 @@ export const Toolbar: React.FC = () => {
     };
 
     const handleBack = () => {
-        // Use the page's own history (link clicks + SPA routes happen inside the
-        // iframe, so the outer toolbar can't track them).
         window.postMessage({ command: 'historyBack' }, '*');
     };
 
@@ -81,8 +82,6 @@ export const Toolbar: React.FC = () => {
     };
 
     const handleReload = () => {
-        // Reload from inside the iframe (same-origin as the page). Re-issuing
-        // loadUrl would rebuild an identical webview.html, which VS Code skips.
         window.postMessage({ command: 'reloadFrame' }, '*');
     };
 
@@ -109,17 +108,16 @@ export const Toolbar: React.FC = () => {
     };
 
     const togglePicker = () => {
-        // Picker is now safer for localhost, so we removed the block
         const newState = !pickerActive;
         setPickerActive(newState);
-        setSnipperActive(false); // Exclusive
+        setSnipperActive(false);
         window.postMessage({ command: 'togglePicker', enabled: newState }, '*');
     };
 
     const handleScreenshot = () => {
         const newState = !snipperActive;
         setSnipperActive(newState);
-        setPickerActive(false); // Exclusive
+        setPickerActive(false);
         window.postMessage({ command: 'toggleSnipper', enabled: newState }, '*');
     };
 
@@ -142,7 +140,7 @@ export const Toolbar: React.FC = () => {
     };
 
     return (
-        <div style={{ 
+        <div style={{
             userSelect: 'none',
             position: 'fixed',
             top: 0,
@@ -157,6 +155,26 @@ export const Toolbar: React.FC = () => {
             flexDirection: 'column',
             gap: '4px'
         }}>
+            {/* Loading bar */}
+            {loading && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    height: '2px',
+                    width: '100%',
+                    overflow: 'hidden',
+                    zIndex: 10
+                }}>
+                    <div style={{
+                        width: '30%',
+                        height: '100%',
+                        background: 'var(--vscode-progressBar-background)',
+                        borderRadius: '1px',
+                        animation: 'vb-loading-slide 1.5s ease-in-out infinite'
+                    }}></div>
+                </div>
+            )}
             {/* Navbar */}
             <div className="browser-navbar" style={{
                 display: 'flex',

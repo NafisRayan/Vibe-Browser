@@ -17,9 +17,23 @@ const INJECTED_SCRIPT_PATH = '/__visualbrowser__/injected.js';
 const CROSS_PORT_RE = /^\/__vbproxy__\/(\d+)(\/.*)?$/;
 
 // Debug logging utility - only logs when enabled in settings
+let _debugEnabled = false;
+let _debugInitialized = false;
+
+function _initDebugConfig() {
+    if (_debugInitialized) return;
+    _debugInitialized = true;
+    _debugEnabled = vscode.workspace.getConfiguration('visualBrowser').get<boolean>('enableDebugLogs', false);
+    vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('visualBrowser.enableDebugLogs')) {
+            _debugEnabled = vscode.workspace.getConfiguration('visualBrowser').get<boolean>('enableDebugLogs', false);
+        }
+    });
+}
+
 function debugLog(...args: any[]): void {
-    const config = vscode.workspace.getConfiguration('visualBrowser');
-    if (config.get<boolean>('enableDebugLogs', false)) {
+    _initDebugConfig();
+    if (_debugEnabled) {
         console.log(...args);
     }
 }
@@ -41,7 +55,7 @@ export class ProxyServer {
     private _server: http.Server | undefined;
     private _extensionUri: vscode.Uri;
     private _port: number = 0;
-    private _targetPort: number = 0;
+    private _targetOrigin: string = '';
     private _injectedScriptContent: string = '';
     private _chiiPort: number | undefined;
     private _chiiServer: http.Server | undefined;
@@ -79,7 +93,7 @@ export class ProxyServer {
             console.error('[ProxyServer] Proxy error:', err);
             if (res && !res.headersSent && typeof res.writeHead === 'function') {
                 res.writeHead(502, { 'Content-Type': 'text/html' });
-                res.end(`<h2>Cannot reach localhost:${this._targetPort}</h2><p>${err.message}</p><p>Is your dev server running?</p>`);
+                res.end(`<h2>Cannot reach ${this._targetOrigin}</h2><p>${err.message}</p><p>Is the server running?</p>`);
             }
         });
     }
@@ -89,8 +103,8 @@ export class ProxyServer {
      * Idempotent: if the server is already listening, only the target changes.
      * Returns the proxy's own port.
      */
-    public async start(targetPort: number): Promise<number> {
-        this._targetPort = targetPort;
+    public async start(targetUrl: string): Promise<number> {
+        this._targetOrigin = targetUrl;
 
         if (this._server) {
             return this._port;
@@ -106,20 +120,20 @@ export class ProxyServer {
             server.on('upgrade', (req, socket, head) => {
                 // Forward websockets (Vite / Next / webpack HMR, or a rewritten
                 // cross-port app socket) to the right localhost port.
-                let targetPort = this._targetPort;
+                let target = this._targetOrigin;
                 const cross = req.url ? req.url.match(CROSS_PORT_RE) : null;
                 if (cross) {
-                    targetPort = parseInt(cross[1], 10);
+                    target = `http://127.0.0.1:${cross[1]}`;
                     req.url = cross[2] || '/';
                 }
-                this._proxy.ws(req, socket, head, { target: `http://127.0.0.1:${targetPort}` });
+                this._proxy.ws(req, socket, head, { target });
             });
 
             const onListening = () => {
                 const address = server.address();
                 if (address && typeof address !== 'string') {
                     this._port = address.port;
-                    debugLog(`[ProxyServer] Listening on 127.0.0.1:${this._port} -> localhost:${this._targetPort}`);
+                    debugLog(`[ProxyServer] Listening on 127.0.0.1:${this._port} -> ${this._targetOrigin}`);
                     resolve(this._port);
                 } else {
                     reject(new Error('Failed to get proxy port'));
@@ -130,7 +144,7 @@ export class ProxyServer {
             // origin stays stable across sessions -> localStorage / sessionStorage
             // / cookies persist like a real browser. Fall back to a random port if
             // the preferred one is taken.
-            const preferred = this._preferredPort(this._targetPort);
+            const preferred = this._preferredPort(targetUrl);
             server.once('error', (err: NodeJS.ErrnoException) => {
                 if (err.code === 'EADDRINUSE') {
                     server.once('error', (err2) => {
@@ -154,8 +168,12 @@ export class ProxyServer {
     }
 
     /** Deterministic proxy port for a given target, for a stable iframe origin. */
-    private _preferredPort(targetPort: number): number {
-        return 41000 + (targetPort % 20000);
+    private _preferredPort(targetUrl: string): number {
+        let hash = 0;
+        for (let i = 0; i < targetUrl.length; i++) {
+            hash = ((hash << 5) - hash + targetUrl.charCodeAt(i)) | 0;
+        }
+        return 41000 + (Math.abs(hash) % 20000);
     }
 
     private async _handleRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
@@ -173,20 +191,16 @@ export class ProxyServer {
         // Cross-port API calls the page made to another localhost port get
         // rewritten by the injected script to /__vbproxy__/<port>/... - forward
         // them to that port so the browser sees a same-origin request (no CORS).
-        let targetPort = this._targetPort;
+        let target = this._targetOrigin;
         const cross = req.url ? req.url.match(CROSS_PORT_RE) : null;
         if (cross) {
-            targetPort = parseInt(cross[1], 10);
+            target = `http://127.0.0.1:${cross[1]}`;
             req.url = cross[2] || '/';
         }
-        (req as any)._vbPort = targetPort;
+        (req as any)._vbTarget = target;
 
-        // Cookies, storage and auth are handled natively by the webview since the
-        // framed page runs on a real (proxy) origin - we don't touch them here.
-        // Ask upstream for identity encoding so we can rewrite HTML without
-        // juggling every compression scheme (gzip fallback kept below anyway).
         this._proxy.web(req, res, {
-            target: `http://127.0.0.1:${targetPort}`,
+            target,
             headers: { 'accept-encoding': 'identity' }
         });
     }
@@ -208,12 +222,10 @@ export class ProxyServer {
             headers['access-control-allow-credentials'] = 'true';
         }
 
-        // Keep redirects inside the proxy: rewrite absolute Location headers that
-        // point back at the dev server to a relative path, so the iframe never
-        // navigates straight to localhost:<port> (which would re-trigger
-        // X-Frame-Options and blank the frame).
+        // Keep ALL redirects inside the proxy so the iframe never navigates
+        // to a raw origin (which would hit X-Frame-Options and blank the frame).
         if (headers['location']) {
-            headers['location'] = this._rewriteLocation(headers['location'] as string, (req as any)._vbPort || this._targetPort);
+            headers['location'] = this._rewriteLocation(headers['location'] as string, (req as any)._vbTarget || this._targetOrigin);
         }
 
         const contentType = (proxyRes.headers['content-type'] || '').toLowerCase();
@@ -260,16 +272,22 @@ export class ProxyServer {
         });
     }
 
-    private _rewriteLocation(location: string, port: number): string {
+    private _rewriteLocation(location: string, target: string): string {
         try {
-            const loc = new URL(location, `http://127.0.0.1:${port}`);
-            if (loc.hostname !== 'localhost' && loc.hostname !== '127.0.0.1') {
-                return location;
-            }
-            const locPort = loc.port ? parseInt(loc.port, 10) : (loc.protocol === 'https:' ? 443 : 80);
+            const targetUrl = new URL(target);
+            const loc = new URL(location, target);
             const rest = loc.pathname + loc.search + loc.hash;
-            // Main target -> relative; other localhost port -> keep it proxied.
-            return locPort === this._targetPort ? rest : `/__vbproxy__/${locPort}${rest}`;
+
+            // Same origin as target -> relative (stays in proxy)
+            if (loc.host === targetUrl.host) {
+                return rest;
+            }
+
+            // Cross-origin redirect (e.g. google.com -> www.google.com)
+            // Re-target the proxy to the new origin so subsequent requests follow.
+            const newTarget = `${loc.protocol}//${loc.host}`;
+            this._targetOrigin = newTarget;
+            return rest;
         } catch {
             return location;
         }

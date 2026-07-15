@@ -76,17 +76,15 @@
     "package": "vsce package"
   },
   "devDependencies": {
+    "@types/http-proxy": "^1.17.17",
     "@types/node": "^20.19.27",
     "@types/vscode": "^1.96.0",
     "@vscode/vsce": "^3.7.1",
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@types/http-proxy": "^1.17.17",
     "chii": "^1.15.5",
     "http-proxy": "^1.18.1",
-    "img-clipboard": "^1.1.0",
-    "node-localstorage": "^3.0.5",
-    "tough-cookie": "^6.0.0"
+    "img-clipboard": "^1.1.0"
   }
 }

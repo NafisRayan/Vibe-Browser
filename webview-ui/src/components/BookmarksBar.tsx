@@ -1,10 +1,5 @@
 import React from 'react';
-
-export interface Bookmark {
-    url: string;
-    title: string;
-    domain: string;
-}
+import { Bookmark } from '../common/types';
 
 interface BookmarksBarProps {
     bookmarks: Bookmark[];
@@ -38,62 +33,29 @@ export const BookmarksBar: React.FC<BookmarksBarProps> = ({
                 gap: '2px',
                 alignItems: 'center'
             }}>
-                {bookmarks.map((bookmark, idx) => (
+                {bookmarks.map((bookmark) => (
                     <button
-                        key={idx}
+                        key={bookmark.url}
                         draggable
-                        className="bookmark-item"
+                        className="vb-bookmark-item"
                         title={bookmark.url}
                         onClick={() => onBookmarkClick(bookmark.url)}
                         onContextMenu={(e) => {
                             e.preventDefault();
                             onBookmarkRemove(bookmark.url);
                         }}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '4px 8px',
-                            background: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: 'var(--vscode-foreground)',
-                            cursor: 'pointer',
-                            fontSize: '11px',
-                            whiteSpace: 'nowrap',
-                            transition: 'all 0.2s ease',
-                            opacity: 0.9
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'var(--vscode-toolbar-hoverBackground)';
-                            e.currentTarget.style.opacity = '1';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'transparent';
-                            e.currentTarget.style.opacity = '0.9';
-                        }}
                     >
                         <img
-                            className="bookmark-favicon"
+                            className="vb-bookmark-favicon"
                             src={getFaviconUrl(bookmark.domain)}
                             alt=""
-                            style={{
-                                width: '14px',
-                                height: '14px',
-                                borderRadius: '2px'
-                            }}
                             onError={(e) => {
                                 e.currentTarget.style.display = 'none';
-                                e.currentTarget.nextElementSibling?.removeAttribute('style');
+                                e.currentTarget.nextElementSibling?.classList.remove('vb-bookmark-fallback');
                             }}
                         />
                         <i
-                            className="bookmark-favicon-fallback codicon codicon-globe"
-                            style={{
-                                display: 'none',
-                                fontSize: '14px',
-                                opacity: 0.6
-                            }}
+                            className="vb-bookmark-fallback codicon codicon-globe"
                         ></i>
                         <span className="bookmark-domain" style={{ fontWeight: 400 }}>{bookmark.title}</span>
                     </button>
@@ -102,8 +64,3 @@ export const BookmarksBar: React.FC<BookmarksBarProps> = ({
         </div>
     );
 };
-
-
-
-
-

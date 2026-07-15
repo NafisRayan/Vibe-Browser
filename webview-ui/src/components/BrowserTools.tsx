@@ -39,34 +39,6 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
         setVisibleTools(prev => ({ ...prev, [tool]: !prev[tool] }));
     };
 
-    const buttonStyle: React.CSSProperties = {
-        background: 'transparent',
-        border: 'none',
-        color: 'var(--vscode-icon-foreground)',
-        width: '28px',
-        height: '28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        padding: 0,
-        fontSize: '16px',
-        transition: 'all 0.2s ease'
-    };
-
-    const menuItemStyle: React.CSSProperties = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '6px 12px',
-        cursor: 'pointer',
-        fontSize: '13px',
-        color: 'var(--vscode-foreground)',
-        borderRadius: '4px',
-        transition: 'background 0.1s'
-    };
-
     return (
         <div className="browser-tools" style={{
             display: 'flex',
@@ -77,16 +49,8 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
             {visibleTools.picker && (
                 <button
                     title="Select element"
-                    className={`tool-button ${isPickerActive ? 'active' : ''}`}
+                    className={`vb-btn ${isPickerActive ? 'active' : ''}`}
                     onClick={onTogglePicker}
-                    style={{
-                        ...buttonStyle,
-                        background: isPickerActive ? 'var(--vscode-button-background)' : 'transparent',
-                        color: isPickerActive ? 'var(--vscode-button-foreground)' : 'var(--vscode-icon-foreground)',
-                        boxShadow: isPickerActive ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'
-                    }}
-                    onMouseEnter={e => !isPickerActive && (e.currentTarget.style.background = 'var(--vscode-toolbar-hoverBackground)')}
-                    onMouseLeave={e => !isPickerActive && (e.currentTarget.style.background = 'transparent')}
                 >
                     <i className="codicon codicon-inspect"></i>
                 </button>
@@ -95,11 +59,8 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
             {visibleTools.camera && (
                 <button
                     title="Capture area screenshot"
-                    className="tool-button"
+                    className="vb-btn"
                     onClick={onScreenshot}
-                    style={buttonStyle}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-toolbar-hoverBackground)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                     <i className="codicon codicon-device-camera"></i>
                 </button>
@@ -112,11 +73,8 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
             {visibleTools.terminal && (
                 <button
                     title="Show Console"
-                    className="tool-button"
+                    className="vb-btn"
                     onClick={onToggleConsole}
-                    style={buttonStyle}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-toolbar-hoverBackground)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                     <i className="codicon codicon-terminal"></i>
                 </button>
@@ -124,14 +82,9 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
 
             <button
                 title="Browser Menu"
-                className="tool-button"
+                className="vb-btn"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                style={{
-                    ...buttonStyle,
-                    background: isMenuOpen ? 'var(--vscode-toolbar-activeBackground)' : 'transparent'
-                }}
-                onMouseEnter={e => !isMenuOpen && (e.currentTarget.style.background = 'var(--vscode-toolbar-hoverBackground)')}
-                onMouseLeave={e => !isMenuOpen && (e.currentTarget.style.background = 'transparent')}
+                style={isMenuOpen ? { background: 'var(--vscode-toolbar-activeBackground)' } : undefined}
             >
                 <i className="codicon codicon-ellipsis"></i>
             </button>
@@ -153,62 +106,52 @@ export const BrowserTools: React.FC<BrowserToolsProps> = ({
                     flexDirection: 'column',
                     gap: '2px'
                 }}>
-                    <div 
-                        style={menuItemStyle}
+                    <div
+                        className="vb-menu-item"
                         onClick={() => { onReload(); setIsMenuOpen(false); }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-menu-selectionBackground)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                        <i className="codicon codicon-refresh" style={{ fontSize: '14px' }}></i>
+                        <i className="codicon codicon-refresh"></i>
                         <span>Hard Refresh</span>
                     </div>
 
                     <div
-                        style={menuItemStyle}
+                        className="vb-menu-item"
                         onClick={() => { onCopyConsole(); setIsMenuOpen(false); }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-menu-selectionBackground)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                        <i className="codicon codicon-debug-console" style={{ fontSize: '14px' }}></i>
+                        <i className="codicon codicon-debug-console"></i>
                         <span>Copy Console Logs</span>
                     </div>
 
                     <div style={{ height: '1px', background: 'var(--vscode-menu-separatorBackground)', margin: '4px 8px' }}></div>
-                    
+
                     <div style={{ padding: '4px 12px', fontSize: '11px', color: 'var(--vscode-descriptionForeground)', fontWeight: 600, textTransform: 'uppercase' }}>
                         Toggle Visibility
                     </div>
 
-                    <div 
-                        style={menuItemStyle}
+                    <div
+                        className="vb-menu-item"
                         onClick={() => toggleTool('picker')}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-menu-selectionBackground)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                        <i className={`codicon ${visibleTools.picker ? 'codicon-check' : ''}`} style={{ width: '16px', fontSize: '14px' }}></i>
-                        <i className="codicon codicon-inspect" style={{ fontSize: '14px' }}></i>
+                        <i className={`codicon vb-menu-check ${visibleTools.picker ? 'codicon-check' : ''}`}></i>
+                        <i className="codicon codicon-inspect"></i>
                         <span>Element Picker</span>
                     </div>
 
-                    <div 
-                        style={menuItemStyle}
+                    <div
+                        className="vb-menu-item"
                         onClick={() => toggleTool('camera')}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-menu-selectionBackground)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                        <i className={`codicon ${visibleTools.camera ? 'codicon-check' : ''}`} style={{ width: '16px', fontSize: '14px' }}></i>
-                        <i className="codicon codicon-device-camera" style={{ fontSize: '14px' }}></i>
+                        <i className={`codicon vb-menu-check ${visibleTools.camera ? 'codicon-check' : ''}`}></i>
+                        <i className="codicon codicon-device-camera"></i>
                         <span>Screenshot</span>
                     </div>
 
-                    <div 
-                        style={menuItemStyle}
+                    <div
+                        className="vb-menu-item"
                         onClick={() => toggleTool('terminal')}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--vscode-menu-selectionBackground)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                        <i className={`codicon ${visibleTools.terminal ? 'codicon-check' : ''}`} style={{ width: '16px', fontSize: '14px' }}></i>
-                        <i className="codicon codicon-terminal" style={{ fontSize: '14px' }}></i>
+                        <i className={`codicon vb-menu-check ${visibleTools.terminal ? 'codicon-check' : ''}`}></i>
+                        <i className="codicon codicon-terminal"></i>
                         <span>Console</span>
                     </div>
                 </div>

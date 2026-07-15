@@ -1,9 +1,41 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
 import { ProxyServer } from './proxy/ProxyServer';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { copyImg, ErrorCodes, isWayland } = require('img-clipboard');
+
+// Shared CSS for toolbar buttons (injected into webview shell)
+const SHARED_CSS = `
+.vb-btn{background:transparent;border:none;color:var(--vscode-icon-foreground);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;padding:0;font-size:16px;transition:background .15s ease}
+.vb-btn:hover{background:var(--vscode-toolbar-hoverBackground)}
+.vb-btn:active{background:var(--vscode-toolbar-activeBackground)}
+.vb-btn:disabled,.vb-btn[disabled]{opacity:.3;cursor:default;filter:grayscale(1);pointer-events:none}
+.vb-btn.active{background:var(--vscode-button-background);color:var(--vscode-button-foreground);box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.vb-btn.active:hover{background:var(--vscode-button-hoverBackground)}
+.vb-btn.bookmarked{color:var(--vscode-charts-yellow)}
+.vb-btn.nav-back:hover{transform:translateX(-2px)}
+.vb-btn.nav-forward:hover{transform:translateX(2px)}
+.vb-btn.nav-refresh:hover .codicon-refresh{transform:rotate(180deg)}
+.vb-btn.nav-refresh .codicon-refresh{transition:transform .4s ease}
+.vb-menu-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:13px;color:var(--vscode-foreground);border-radius:4px;transition:background .1s}
+.vb-menu-item:hover{background:var(--vscode-menu-selectionBackground)}
+.vb-menu-item .codicon{font-size:14px}
+.vb-menu-check{width:16px;font-size:14px}
+.vb-bookmark-item{display:flex;align-items:center;gap:6px;padding:4px 8px;background:transparent;border:none;border-radius:4px;color:var(--vscode-foreground);cursor:pointer;font-size:11px;white-space:nowrap;transition:background .15s ease,opacity .15s ease;opacity:.9}
+.vb-bookmark-item:hover{background:var(--vscode-toolbar-hoverBackground);opacity:1}
+.vb-bookmark-favicon{width:14px;height:14px;border-radius:2px}
+.vb-bookmark-fallback{display:none;font-size:14px;opacity:.6}
+@keyframes vb-loading-slide{0%{transform:translateX(-100%)}50%{transform:translateX(300%)}100%{transform:translateX(-100%)}}
+`;
+
+interface Bookmark {
+    url: string;
+    title: string;
+    domain: string;
+}
 
 // Single iframe id used for every proxied page.
 const FRAME_ID = 'vibe-browser-frame';
@@ -14,9 +46,10 @@ export class BrowserPanel {
     private readonly _extensionUri: vscode.Uri;
     private _disposables: vscode.Disposable[] = [];
     private _currentUrl: string = '';
-    private _bookmarks: any[] = [];
+    private _bookmarks: Bookmark[] = [];
     private _proxyServer: ProxyServer;
     private _context: vscode.ExtensionContext;
+    private _webviewReady: boolean = false;
 
     public static createOrShow(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         const column = vscode.window.activeTextEditor
@@ -54,7 +87,13 @@ export class BrowserPanel {
         // runs on a real proxy origin), so no server-side storage manager needed.
         this._proxyServer = new ProxyServer(extensionUri);
 
-        this._bookmarks = this._context.globalState.get('copilot-bridge-bookmarks', []);
+        // Migrate old key if present
+        const oldBookmarks = this._context.globalState.get('copilot-bridge-bookmarks');
+        if (oldBookmarks) {
+            this._context.globalState.update('vibe-browser-bookmarks', oldBookmarks);
+            this._context.globalState.update('copilot-bridge-bookmarks', undefined);
+        }
+        this._bookmarks = this._context.globalState.get('vibe-browser-bookmarks', []);
         this._currentUrl = this._context.globalState.get('vibe-browser-last-url', '');
 
         if (this._currentUrl && this._currentUrl.trim() !== '') {
@@ -68,6 +107,9 @@ export class BrowserPanel {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.command) {
+                    case 'webviewReady':
+                        this._webviewReady = true;
+                        return;
                     case 'loadUrl':
                         this._loadUrl(message.url);
                         return;
@@ -102,9 +144,9 @@ export class BrowserPanel {
         this._panel.webview.postMessage({ command: 'loadBookmarks', bookmarks: this._bookmarks });
     }
 
-    private _saveBookmarks(bookmarks: any[]) {
+    private _saveBookmarks(bookmarks: Bookmark[]) {
         this._bookmarks = bookmarks;
-        this._context.globalState.update('copilot-bridge-bookmarks', bookmarks);
+        this._context.globalState.update('vibe-browser-bookmarks', bookmarks);
     }
 
     // ===== DevTools =====
@@ -136,7 +178,7 @@ export class BrowserPanel {
             const base64Image = base64Data.split(';base64,').pop();
             if (!base64Image) return;
 
-            const filePath = path.join(require('os').tmpdir(), `vibe-browser-shot-${Date.now()}.png`);
+            const filePath = path.join(os.tmpdir(), `vibe-browser-shot-${Date.now()}.png`);
             await fs.promises.writeFile(filePath, Buffer.from(base64Image, 'base64'));
 
             const [err, stdout, stderr] = await copyImg(filePath);
@@ -165,7 +207,7 @@ export class BrowserPanel {
             try {
                 const base64Image = elementScreenshot.split(';base64,').pop();
                 if (base64Image) {
-                    const filePath = path.join(require('os').tmpdir(), `vibe-browser-element-${Date.now()}.png`);
+                    const filePath = path.join(os.tmpdir(), `vibe-browser-element-${Date.now()}.png`);
                     await fs.promises.writeFile(filePath, Buffer.from(base64Image, 'base64'));
 
                     const [err] = await copyImg(filePath);
@@ -209,7 +251,6 @@ export class BrowserPanel {
         let url = (rawUrl || '').trim();
         if (!url) return;
 
-        // Bare port number -> localhost:<port>
         if (/^\d+$/.test(url)) {
             url = `http://localhost:${url}`;
         }
@@ -217,49 +258,56 @@ export class BrowserPanel {
             url = 'http://' + url;
         }
 
-        if (!this._isLocalhostUrl(url)) {
-            this._currentUrl = url;
-            this._renderLocalhostOnly(url);
-            return;
-        }
-
         this._currentUrl = url;
         this._context.globalState.update('vibe-browser-last-url', url);
-        await this._loadLocalhostViaProxy(url);
+        await this._loadViaProxy(url);
     }
 
-    private async _loadLocalhostViaProxy(url: string) {
+    private async _loadViaProxy(url: string) {
         try {
             const parsed = new URL(url);
-            const targetPort = parseInt(parsed.port || '80', 10);
+            const targetOrigin = `${parsed.protocol}//${parsed.host}`;
 
-            const proxyPort = await this._proxyServer.start(targetPort);
+            const proxyPort = await this._proxyServer.start(targetOrigin);
             const proxyUrl = `http://127.0.0.1:${proxyPort}${parsed.pathname}${parsed.search}`;
 
-            // Tunnel our proxy port so the webview iframe can reach it
             const tunneled = await vscode.env.asExternalUri(vscode.Uri.parse(proxyUrl));
 
             this._renderShell(tunneled.toString());
 
-            setTimeout(() => {
-                this._panel.webview.postMessage({ command: 'updateUrl', url });
-                this._panel.webview.postMessage({ command: 'updatePageTitle', title: 'Localhost' });
-            }, 100);
+            await this._waitForWebviewReady();
+            this._panel.webview.postMessage({ command: 'updateUrl', url });
+            this._panel.webview.postMessage({ command: 'updatePageTitle', title: parsed.hostname });
 
-            // Push the DevTools target URL once Chii has discovered it
-            setTimeout(async () => {
-                const result = await this._proxyServer.getChiiUrl();
-                if (result.url) {
-                    this._panel.webview.postMessage({ command: 'updateChiiUrl', chiiUrl: result.url });
-                }
-            }, 2000);
+            if (this._isLocalhostUrl(url)) {
+                this._proxyServer.getChiiUrl().then(result => {
+                    if (result.url) {
+                        this._panel.webview.postMessage({ command: 'updateChiiUrl', chiiUrl: result.url });
+                    }
+                });
+            }
         } catch (error: any) {
-            vscode.window.showErrorMessage(`Failed to load localhost: ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to load ${url}: ${error.message}`);
             this._renderShell(undefined, `<h2>Error loading ${this._escapeHtml(url)}</h2><p>${this._escapeHtml(error.message)}</p>`);
         }
     }
 
     // ===== Rendering =====
+
+    /** Wait until the webview sends a 'webviewReady' message (max 5s). */
+    private _waitForWebviewReady(timeoutMs = 5000): Promise<void> {
+        if (this._webviewReady) return Promise.resolve();
+        return new Promise(resolve => {
+            const timer = setTimeout(() => resolve(), timeoutMs);
+            const check = this._panel.webview.onDidReceiveMessage(msg => {
+                if (msg.command === 'webviewReady') {
+                    clearTimeout(timer);
+                    check.dispose();
+                    resolve();
+                }
+            });
+        });
+    }
 
     private _escapeHtml(text: string): string {
         return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -269,12 +317,12 @@ export class BrowserPanel {
         const cspSource = this._panel.webview.cspSource;
         return [
             `default-src 'none'`,
-            `script-src ${cspSource} 'unsafe-inline' 'unsafe-eval'`,
-            `style-src ${cspSource} https://unpkg.com 'unsafe-inline'`,
-            `font-src ${cspSource} https://unpkg.com`,
+            `script-src ${cspSource} 'unsafe-inline'`,
+            `style-src ${cspSource} https: http: 'unsafe-inline'`,
+            `font-src ${cspSource} https: http:`,
             `img-src ${cspSource} https: http: data: blob:`,
-            `frame-src http://127.0.0.1:* http://localhost:* https:`,
-            `connect-src ${cspSource} https: http://127.0.0.1:* ws: wss:`
+            `frame-src https: http:`,
+            `connect-src ${cspSource} https: http: ws: wss:`
         ].join('; ');
     }
 
@@ -303,7 +351,7 @@ export class BrowserPanel {
                     <div class="welcome">
                         <img src="${logoUri}" class="logo" alt="Vibe Browser" />
                         <h1>Vibe Browser</h1>
-                        <p>Enter a <strong>localhost</strong> URL above to start (e.g. <code>localhost:3000</code>).</p>
+                        <p>Enter a <strong>URL</strong> above to start (e.g. <code>localhost:3000</code> or <code>github.com</code>).</p>
                     </div>
                 </div>`;
         }
@@ -325,6 +373,7 @@ export class BrowserPanel {
         .welcome { max-width: 420px; padding: 2rem; }
         .logo { width: 96px; height: 96px; border-radius: 20px; margin-bottom: 1rem; }
         code { background: var(--vscode-textCodeBlock-background); padding: 2px 6px; border-radius: 4px; }
+        ${SHARED_CSS}
     </style>
 </head>
 <body>
@@ -333,20 +382,6 @@ export class BrowserPanel {
     <script src="${scriptUri}"></script>
 </body>
 </html>`;
-    }
-
-    private _renderLocalhostOnly(url: string) {
-        this._renderShell(undefined, `
-            <div class="welcome">
-                <h1>Localhost only</h1>
-                <p>Vibe Browser is built for local development. It can load
-                <code>localhost</code> / <code>127.0.0.1</code> URLs only.</p>
-                <p style="opacity:.6">You entered: <code>${this._escapeHtml(url)}</code></p>
-            </div>`);
-        setTimeout(() => {
-            this._panel.webview.postMessage({ command: 'updateUrl', url });
-            this._panel.webview.postMessage({ command: 'updatePageTitle', title: 'Localhost only' });
-        }, 100);
     }
 
     public dispose() {
